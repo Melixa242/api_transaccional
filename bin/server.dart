@@ -24,7 +24,7 @@ void main() async {
   final apiKey = env['API_KEY'] ?? '';
   if (apiKey.isEmpty) {
     if (enProduccion) {
-      stderr.writeln('API_KEY no está definida; el servidor no arranca sin autenticación en Cloud Run.');
+      stderr.writeln('API_KEY no está definida; el servidor no arranca sin autenticación en producción.');
       exit(1);
     }
     print('⚠️  API_KEY no definida: la API corre SIN autenticación (solo para desarrollo).');

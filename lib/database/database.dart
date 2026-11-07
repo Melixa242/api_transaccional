@@ -4,8 +4,9 @@ import 'dart:io';
 
 import 'package:mysql_client/mysql_client.dart';
 
-/// `K_SERVICE` lo define Cloud Run en cada contenedor.
-bool get enProduccion => Platform.environment.containsKey('K_SERVICE');
+/// `K_SERVICE` lo define Cloud Run y `RENDER` lo define Render en cada contenedor.
+bool get enProduccion =>
+    Platform.environment.containsKey('K_SERVICE') || Platform.environment.containsKey('RENDER');
 
 class Database {
   static const _variablesObligatorias = ['MYSQL_HOST', 'MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE'];
