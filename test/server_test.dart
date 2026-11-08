@@ -44,6 +44,26 @@ void main() {
     expect((body['recursos'] as Map).containsKey('Ventas'), isTrue);
   });
 
+  test('/docs devuelve la documentación en HTML sin API key', () async {
+    final r = await get(Uri.parse('$host/docs'));
+    expect(r.statusCode, 200);
+    expect(r.headers['content-type'], contains('text/html'));
+    expect(r.body, contains('/api/ventas'));
+  });
+
+  test('un navegador ve la raíz y /api como página web', () async {
+    for (final ruta in ['/', '/api']) {
+      final r = await get(Uri.parse('$host$ruta'), headers: {'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8'});
+      expect(r.statusCode, 200);
+      expect(r.headers['content-type'], contains('text/html'));
+    }
+  });
+
+  test('la app (Accept: application/json) sigue recibiendo JSON en /api', () async {
+    final r = await get(Uri.parse('$host/api'), headers: {'Accept': 'application/json'});
+    expect(r.headers['content-type'], contains('application/json'));
+  });
+
   test('sin API key responde 401', () async {
     final r = await get(Uri.parse('$host/api/ventas'));
     expect(r.statusCode, 401);

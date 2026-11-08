@@ -30,10 +30,15 @@ void main() async {
   final connection = DbPool(maxConnections: int.tryParse(env['DB_POOL_SIZE'] ?? '') ?? 5);
 
   final router = Router();
-  // Documentación pública en JSON: es lo primero que se ve al abrir la URL del servidor.
-  Response docs(Request request) => docsJson(version, requiereApiKey: apiKey.isNotEmpty);
+  // Documentación pública: un navegador (Accept: text/html) ve la página web;
+  // la app Flutter y otros clientes (Accept: application/json) reciben el JSON.
+  final conKey = apiKey.isNotEmpty;
+  Response docs(Request request) => (request.headers['accept'] ?? '').contains('text/html')
+      ? docsHtml(version, requiereApiKey: conKey)
+      : docsJson(version, requiereApiKey: conKey);
   router.get('/', docs);
   router.get('/api', docs);
+  router.get('/docs', (Request request) => docsHtml(version, requiereApiKey: conKey));
   router.get('/api/health', (Request request) async {
     try {
       await connection.execute('SELECT 1');
@@ -83,8 +88,8 @@ Response _json(int status, Object body) =>
     Response(status, body: jsonEncode(body), headers: {'Content-Type': 'application/json'});
 
 /// Exige `X-API-Key: <API_KEY>` (o `Authorization: Bearer <API_KEY>`) en todo
-/// menos `/api/health` y la documentación (`/`, `/api`). Con [apiKey] vacía no valida nada (desarrollo).
-const _rutasPublicas = {'', 'api', 'api/health'};
+/// menos `/api/health` y la documentación (`/`, `/api`, `/docs`). Con [apiKey] vacía no valida nada (desarrollo).
+const _rutasPublicas = {'', 'api', 'docs', 'api/health'};
 
 Middleware apiKeyAuth(String apiKey) {
   return (Handler inner) => (Request request) {
