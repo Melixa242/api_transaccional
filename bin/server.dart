@@ -6,6 +6,7 @@ import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
 import 'package:proyecto_krosty/database/database.dart';
 import 'package:proyecto_krosty/rutas/detalle_venta_route.dart';
+import 'package:proyecto_krosty/rutas/docs_route.dart';
 import 'package:proyecto_krosty/rutas/ingreso_bebida_producto_route.dart';
 import 'package:proyecto_krosty/rutas/ingreso_bebida_route.dart';
 import 'package:proyecto_krosty/rutas/ingreso_insumo_detalle_route.dart';
@@ -29,6 +30,9 @@ void main() async {
   final connection = DbPool(maxConnections: int.tryParse(env['DB_POOL_SIZE'] ?? '') ?? 5);
 
   final router = Router();
+  // Documentación pública: es lo primero que se ve al abrir la URL del servidor.
+  router.get('/', (Request request) => docsHtml(version, requiereApiKey: apiKey.isNotEmpty));
+  router.get('/api', (Request request) => docsJson(version, requiereApiKey: apiKey.isNotEmpty));
   router.get('/api/health', (Request request) async {
     try {
       await connection.execute('SELECT 1');
@@ -78,10 +82,12 @@ Response _json(int status, Object body) =>
     Response(status, body: jsonEncode(body), headers: {'Content-Type': 'application/json'});
 
 /// Exige `X-API-Key: <API_KEY>` (o `Authorization: Bearer <API_KEY>`) en todo
-/// menos `/api/health`. Con [apiKey] vacía no valida nada (desarrollo).
+/// menos `/api/health` y la documentación (`/`, `/api`). Con [apiKey] vacía no valida nada (desarrollo).
+const _rutasPublicas = {'', 'api', 'api/health'};
+
 Middleware apiKeyAuth(String apiKey) {
   return (Handler inner) => (Request request) {
-        if (apiKey.isEmpty || request.url.path == 'api/health') return inner(request);
+        if (apiKey.isEmpty || _rutasPublicas.contains(request.url.path)) return inner(request);
         final auth = request.headers['authorization'] ?? '';
         final recibida = request.headers['x-api-key'] ?? (auth.startsWith('Bearer ') ? auth.substring(7) : '');
         if (!_igualesTiempoConstante(recibida, apiKey)) {
