@@ -13,6 +13,6 @@ FROM scratch
 COPY --from=build /runtime/ /
 COPY --from=build /app/output/bundle/ /app/
 
-# Cloud Run inyecta PORT (8080 por defecto); el servidor lo lee al arrancar.
-EXPOSE 8080
+# Render (10000) y Cloud Run (8080) inyectan PORT; el servidor lo lee al arrancar.
+EXPOSE 10000
 CMD ["/app/bin/server"]

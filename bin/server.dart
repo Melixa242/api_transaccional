@@ -23,11 +23,7 @@ void main() async {
   final env = Platform.environment;
   final apiKey = env['API_KEY'] ?? '';
   if (apiKey.isEmpty) {
-    if (enProduccion) {
-      stderr.writeln('API_KEY no está definida; el servidor no arranca sin autenticación en producción.');
-      exit(1);
-    }
-    print('⚠️  API_KEY no definida: la API corre SIN autenticación (solo para desarrollo).');
+    print('⚠️  API_KEY no definida: la API corre SIN autenticación; cualquiera puede leer y escribir datos.');
   }
 
   final connection = DbPool(maxConnections: int.tryParse(env['DB_POOL_SIZE'] ?? '') ?? 5);
