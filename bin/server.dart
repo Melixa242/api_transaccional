@@ -30,9 +30,10 @@ void main() async {
   final connection = DbPool(maxConnections: int.tryParse(env['DB_POOL_SIZE'] ?? '') ?? 5);
 
   final router = Router();
-  // Documentación pública: es lo primero que se ve al abrir la URL del servidor.
-  router.get('/', (Request request) => docsHtml(version, requiereApiKey: apiKey.isNotEmpty));
-  router.get('/api', (Request request) => docsJson(version, requiereApiKey: apiKey.isNotEmpty));
+  // Documentación pública en JSON: es lo primero que se ve al abrir la URL del servidor.
+  Response docs(Request request) => docsJson(version, requiereApiKey: apiKey.isNotEmpty);
+  router.get('/', docs);
+  router.get('/api', docs);
   router.get('/api/health', (Request request) async {
     try {
       await connection.execute('SELECT 1');

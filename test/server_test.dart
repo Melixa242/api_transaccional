@@ -30,10 +30,10 @@ void main() {
 
   tearDownAll(() => p.kill());
 
-  test('la raíz muestra la documentación sin API key', () async {
+  test('la raíz devuelve la documentación en JSON sin API key', () async {
     final r = await get(Uri.parse('$host/'));
     expect(r.statusCode, 200);
-    expect(r.headers['content-type'], contains('text/html'));
+    expect(r.headers['content-type'], contains('application/json'));
     expect(r.body, contains('/api/ventas'));
   });
 

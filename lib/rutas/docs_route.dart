@@ -25,8 +25,7 @@ class RutaDoc {
 /// `lib/rutas/`, hay que sumarla aquí para que aparezca en la documentación.
 const catalogoRutas = <String, List<RutaDoc>>{
   'Sistema': [
-    RutaDoc('GET', '/', 'Esta documentación (HTML).'),
-    RutaDoc('GET', '/api', 'Esta documentación en JSON.'),
+    RutaDoc('GET', '/api', 'Esta documentación en JSON. También en /.'),
     RutaDoc('GET', '/api/health', 'Estado del servidor y de la base de datos. No exige API key.'),
   ],
   'Ventas': [
@@ -114,7 +113,7 @@ const catalogoRutas = <String, List<RutaDoc>>{
   ],
 };
 
-/// `GET /api`: el catálogo en JSON.
+/// `GET /` y `GET /api`: el catálogo en JSON (lo consume la app Flutter).
 Response docsJson(String version, {required bool requiereApiKey}) => Response.ok(
       jsonEncode({
         'nombre': 'API transaccional Pollos Krosty',
@@ -126,72 +125,3 @@ Response docsJson(String version, {required bool requiereApiKey}) => Response.ok
       }),
       headers: {'Content-Type': 'application/json; charset=utf-8'},
     );
-
-/// `GET /`: el catálogo como página HTML.
-Response docsHtml(String version, {required bool requiereApiKey}) {
-  final esc = const HtmlEscape(HtmlEscapeMode.attribute);
-  final secciones = StringBuffer();
-  for (final e in catalogoRutas.entries) {
-    secciones.write('<section><h2>${esc.convert(e.key)}</h2><table><tbody>');
-    for (final r in e.value) {
-      final ruta = esc.convert(r.ruta).replaceAllMapped(
-          RegExp(r'&lt;(\w+)&gt;'), (m) => '<span class="param">{${m[1]}}</span>');
-      final enlace = r.metodo == 'GET' && !r.ruta.contains('<') ? '<a href="${esc.convert(r.ruta)}">$ruta</a>' : ruta;
-      secciones.write('<tr><td class="m"><span class="metodo ${r.metodo.toLowerCase()}">${r.metodo}</span></td>'
-          '<td><code>$enlace</code><div class="desc">${esc.convert(r.descripcion)}</div>'
-          '${r.campos == null ? '' : '<div class="campos"><b>Body JSON:</b> ${esc.convert(r.campos!)}</div>'}'
-          '</td></tr>');
-    }
-    secciones.write('</tbody></table></section>');
-  }
-
-  final auth = requiereApiKey
-      ? 'Todas las rutas (salvo <code>/</code>, <code>/api</code> y <code>/api/health</code>) exigen el header '
-          '<code>X-API-Key: &lt;clave&gt;</code> o <code>Authorization: Bearer &lt;clave&gt;</code>. '
-          'Sin la clave responden <code>401 No autorizado</code>.'
-      : 'Este servidor corre <b>sin API key</b>: todas las rutas están abiertas.';
-
-  final html = '''<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>API Pollos Krosty</title>
-<style>
-:root{--bg:#f7f7f5;--card:#fff;--text:#1d1d1b;--muted:#6b6b66;--border:#e3e3de;--code:#f0f0ec;
---get:#1f7a4d;--post:#1f5fa8;--put:#9a6a00;--delete:#b3261e}
-@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#1f1f1d;--text:#ecece8;--muted:#a3a39c;
---border:#33332f;--code:#2a2a27;--get:#5cc48f;--post:#7fb2f0;--put:#e0b54a;--delete:#f08a82}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:920px;margin:0 auto;padding:32px 16px 64px}
-h1{margin:0 0 4px;font-size:26px}
-.sub{color:var(--muted);margin:0 0 24px}
-.aviso{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:28px}
-section{margin-bottom:28px}
-h2{font-size:17px;margin:0 0 8px}
-table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-td{padding:10px 14px;border-top:1px solid var(--border);vertical-align:top}
-tr:first-child td{border-top:0}
-td.m{width:86px}
-.metodo{display:inline-block;min-width:62px;text-align:center;font:600 12px/1.9 ui-monospace,Consolas,monospace;
-border:1px solid currentColor;border-radius:6px}
-.get{color:var(--get)}.post{color:var(--post)}.put{color:var(--put)}.delete{color:var(--delete)}
-code{font:13.5px ui-monospace,Consolas,monospace;background:var(--code);padding:2px 6px;border-radius:5px;word-break:break-all}
-a{color:inherit}
-.param{color:var(--put)}
-.desc{color:var(--muted);margin-top:4px}
-.campos{font-size:13.5px;margin-top:4px}
-</style>
-</head>
-<body>
-<main>
-<h1>API transaccional Pollos Krosty</h1>
-<p class="sub">Versión $version · Respuestas en JSON · <a href="/api">ver en JSON</a> · <a href="/api/health">estado</a></p>
-<div class="aviso">$auth</div>
-$secciones
-</main>
-</body>
-</html>''';
-  return Response.ok(html, headers: {'Content-Type': 'text/html; charset=utf-8'});
-}
